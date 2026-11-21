@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090d18">
+<link rel="manifest" href="manifest.webmanifest">
+<title>CART3R PLAYER</title>
+<style>
+:root{color-scheme:dark;--bg:#090d18;--panel:#121a2b;--panel2:#1a2540;--line:#293653;--txt:#f4f7ff;--muted:#a9b5ce;--accent:#6d8cff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -20%,#263b70 0,#090d18 50%);color:var(--txt);font:15px system-ui,Arial,sans-serif;min-height:100vh}
+header{padding:22px 18px 12px;max-width:900px;margin:auto}h1{font-size:25px;letter-spacing:1.5px;margin:0}header p{color:var(--muted);margin:5px 0}
+main{max-width:900px;margin:auto;padding:12px 16px 40px}.tabs{display:flex;gap:8px;overflow:auto;margin:8px 0 16px}
+button,.tab{border:1px solid var(--line);background:var(--panel);color:var(--txt);border-radius:12px;padding:11px 14px;font-weight:650;cursor:pointer}
+.tab.active,button.primary{background:var(--accent);border-color:var(--accent);color:white}
+.panel{background:linear-gradient(145deg,var(--panel),#0f1625);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
+h2{font-size:17px;margin:0 0 12px}input{width:100%;padding:13px;border-radius:11px;border:1px solid var(--line);background:#080e1a;color:white;margin:5px 0 10px}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:120px}.muted{color:var(--muted);font-size:13px}.video{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}.video:last-child{border:0}.thumb{width:112px;aspect-ratio:16/9;object-fit:cover;border-radius:9px;background:#202b40}.vtitle{font-weight:650;overflow-wrap:anywhere}.vsub{font-size:12px;color:var(--muted);margin-top:4px}.actions{display:flex;gap:6px;margin-top:8px}.actions button{padding:7px 10px;font-size:12px}
+#player iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000}#empty{color:var(--muted);padding:16px 0}
+.notice{border-left:3px solid var(--accent);padding:9px 12px;background:#111b30;border-radius:8px;color:#cbd6ef;font-size:13px}
+.hidden{display:none!important}.status{font-size:12px;color:#a9b5ce;margin-top:8px}
+</style>
+</head>
+<body>
+<header><h1>CART3R PLAYER <span style="color:#7f9aff">OFFLINE</span></h1><p>Tu biblioteca personal, también sin conexión.</p></header>
+<main>
+<div class="tabs">
+<button class="tab active" data-tab="library">Biblioteca</button>
+<button class="tab" data-tab="search">Buscar online</button>
+<button class="tab" data-tab="settings">Ajustes</button>
+</div>
+<section id="library">
+<div class="panel"><h2>Guardados en este dispositivo</h2><p class="muted">Tus favoritos y su información siguen disponibles sin Internet. La reproducción de YouTube necesita conexión.</p><div id="savedList"></div></div>
+<div class="panel" id="player"><h2>Reproductor</h2><div class="muted">Elige un vídeo guardado o busca uno cuando tengas conexión.</div></div>
+</section>
+<section id="search" class="hidden">
+<div class="panel"><h2>Buscar vídeos de YouTube</h2>
+<input id="apiKey" type="password" placeholder="Clave de YouTube Data API v3">
+<input id="query" placeholder="¿Qué vídeo buscas?">
+<button class="primary" id="searchBtn">Buscar</button>
+<div id="results"></div><div class="status" id="searchStatus"></div>
+</div>
+<div class="notice">La búsqueda necesita Internet y una clave de YouTube Data API v3. No todos los vídeos permiten reproducción integrada.</div>
+</section>
+<section id="settings" class="hidden">
+<div class="panel"><h2>Modo sin conexión</h2><p class="muted">La aplicación puede abrirse sin conexión después de haberla visitado una vez mientras estabas online y de que se haya instalado su caché.</p><div class="notice" id="connection">Comprobando conexión…</div><p class="muted">Los datos guardados se almacenan en este navegador. Si borras sus datos, perderás la biblioteca local.</p></div>
+<div class="panel"><h2>Añadir vídeo a mano</h2><input id="manualUrl" placeholder="Enlace de YouTube"><input id="manualTitle" placeholder="Título para reconocerlo"><button class="primary" id="addManual">Guardar en biblioteca</button></div>
+</section>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const getSaved=()=>{try{return JSON.parse(localStorage.getItem('cart3r_saved')||'[]')}catch{return[]}};
+const setSaved=x=>localStorage.setItem('cart3r_saved',JSON.stringify(x));
+let saved=getSaved();
+const keyInput=$('#apiKey'); keyInput.value=localStorage.getItem('cart3r_api_key')||'';
+keyInput.addEventListener('change',()=>localStorage.setItem('cart3r_api_key',keyInput.value.trim()));
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));['library','search','settings'].forEach(id=>$('#'+id).classList.toggle('hidden',id!==b.dataset.tab));});
+function videoId(url){try{let u=new URL(url);if(u.hostname.includes('youtu.be'))return u.pathname.slice(1);if(u.hostname.includes('youtube.com'))return u.searchParams.get('v')||u.pathname.split('/').filter(Boolean).pop();}catch{}return null}
+function renderSaved(){saved=getSaved();let root=$('#savedList');root.innerHTML='';if(!saved.length){root.innerHTML='<div id="empty">Todavía no tienes vídeos guardados. Con conexión, busca vídeos o añade un enlace.</div>';return}
+saved.forEach((v,i)=>{let el=document.createElement('div');el.className='video';let img=document.createElement('img');img.className='thumb';img.src=v.id?'https://i.ytimg.com/vi/'+encodeURIComponent(v.id)+'/mqdefault.jpg':'';img.alt='';let info=document.createElement('div');info.style.flex='1';let title=document.createElement('div');title.className='vtitle';title.textContent=v.title;let sub=document.createElement('div');sub.className='vsub';sub.textContent=v.channel||'Vídeo guardado';let acts=document.createElement('div');acts.className='actions';let play=document.createElement('button');play.textContent='Abrir';play.onclick=()=>playVideo(v);let del=document.createElement('button');del.textContent='Quitar';del.onclick=()=>{saved.splice(i,1);setSaved(saved);renderSaved()};acts.append(play,del);info.append(title,sub,acts);el.append(img,info);root.append(el)});
+}
+function playVideo(v){let root=$('#player');root.innerHTML='<h2>Reproductor</h2>';if(!navigator.onLine){root.insertAdjacentHTML('beforeend','<p class="notice">Estás sin conexión. Puedes consultar la ficha guardada, pero YouTube no reproduce el vídeo offline.</p>');root.insertAdjacentHTML('beforeend','<p>'+escapeHtml(v.title)+'</p>');return}
+let frame=document.createElement('iframe');frame.src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(v.id)+'?autoplay=1';frame.title=v.title;frame.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';frame.allowFullscreen=true;root.append(frame)}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function add(v){if(!v.id)return;let a=getSaved();if(!a.some(x=>x.id===v.id))a.unshift(v);setSaved(a);renderSaved()}
+$('#searchBtn').onclick=async()=>{let q=$('#query').value.trim(),key=keyInput.value.trim();if(!navigator.onLine){$('#searchStatus').textContent='Sin conexión: puedes consultar tu biblioteca guardada.';return}if(!key||!q){$('#searchStatus').textContent='Introduce una clave API y un término de búsqueda.';return}
+$('#searchStatus').textContent='Buscando…';$('#results').innerHTML='';
+try{let u=new URL('https://www.googleapis.com/youtube/v3/search');u.search=new URLSearchParams({part:'snippet',type:'video',maxResults:'10',q,key}).toString();let r=await fetch(u);let data=await r.json();if(!r.ok)throw Error(data.error?.message||'No se pudo buscar');(data.items||[]).forEach(item=>{let v={id:item.id.videoId,title:item.snippet.title,channel:item.snippet.channelTitle};let el=document.createElement('div');el.className='video';let img=document.createElement('img');img.className='thumb';img.src=item.snippet.thumbnails?.medium?.url||'';let info=document.createElement('div');info.style.flex='1';let title=document.createElement('div');title.className='vtitle';title.textContent=v.title;let sub=document.createElement('div');sub.className='vsub';sub.textContent=v.channel;let acts=document.createElement('div');acts.className='actions';let save=document.createElement('button');save.textContent='Guardar';save.onclick=()=>{add(v);save.textContent='Guardado'};let play=document.createElement('button');play.textContent='Reproducir';play.onclick=()=>{playVideo(v);document.querySelector('[data-tab="library"]').click()};acts.append(save,play);info.append(title,sub,acts);el.append(img,info);$('#results').append(el)});$('#searchStatus').textContent=(data.items||[]).length?'Resultados listos.':'No se encontraron resultados.'}
+catch(e){$('#searchStatus').textContent='Error: '+e.message}
+};
+$('#addManual').onclick=()=>{let id=videoId($('#manualUrl').value.trim()),title=$('#manualTitle').value.trim()||'Vídeo guardado';if(!id){alert('El enlace no parece ser de YouTube.');return}add({id,title,channel:'Añadido manualmente'});$('#manualUrl').value='';$('#manualTitle').value='';alert('Guardado en tu biblioteca.')};
+function updateConnection(){$('#connection').textContent=navigator.onLine?'Con conexión: puedes buscar y reproducir vídeos.':'Sin conexión: biblioteca disponible; YouTube no se reproduce.'}
+window.addEventListener('online',updateConnection);window.addEventListener('offline',updateConnection);updateConnection();renderSaved();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body></html>

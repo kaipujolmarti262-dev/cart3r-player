@@ -1,0 +1,10 @@
+{
+  "name": "CART3R PLAYER Offline",
+  "short_name": "CART3R",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#090d18",
+  "theme_color": "#090d18",
+  "description": "Biblioteca personal de vídeos con modo sin conexión."
+}

@@ -1,0 +1,21 @@
+CART3R PLAYER OFFLINE — INSTRUCCIONES
+
+QUÉ INCLUYE
+- La interfaz se guarda en caché para poder abrir la aplicación sin conexión.
+- Los favoritos, títulos e historial de la biblioteca se guardan en el almacenamiento local del navegador.
+- La búsqueda de YouTube necesita Internet y una clave de YouTube Data API v3.
+- La reproducción de YouTube necesita Internet. La API y el reproductor oficial no permiten convertir esta aplicación en un descargador offline.
+
+CÓMO ACTIVAR EL MODO OFFLINE EN ANDROID
+1. Descomprime este ZIP.
+2. Sube la carpeta CART3R_PLAYER a un alojamiento HTTPS estático (por ejemplo, un hosting web que permita publicar archivos estáticos).
+3. Abre la dirección HTTPS en Chrome desde el móvil y espera a que cargue completamente una vez con Internet.
+4. En Chrome, abre el menú ⋮ y elige "Añadir a pantalla de inicio" o "Instalar aplicación", si aparece.
+5. Vuelve a abrir CART3R PLAYER una vez online. Después podrás abrir la interfaz sin conexión.
+
+IMPORTANTE
+- Un archivo abierto directamente desde el ZIP o como file:// no puede instalar el Service Worker. Para que el modo offline de la aplicación web funcione, necesita HTTPS.
+- La primera visita debe hacerse con Internet para guardar los archivos de la aplicación.
+- Sin Internet puedes consultar la biblioteca local, pero no buscar ni reproducir vídeos de YouTube.
+- Las miniaturas de YouTube pueden no mostrarse offline porque se alojan en servidores externos.
+- No compartas tu clave API. Para una aplicación pública, lo recomendable es gestionar las búsquedas mediante un servidor propio y proteger la clave.
